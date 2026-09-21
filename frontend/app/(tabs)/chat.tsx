@@ -4,7 +4,7 @@ import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiFetch, useAuth } from "@/src/api";
 import { useI18n } from "@/src/i18n";
-import { Avatar, Button, EmptyState, Input } from "@/src/ui";
+import { Avatar, EmptyState, Input } from "@/src/ui";
 import { radius, spacing, useTheme } from "@/src/theme";
 
 export default function Chat() {
@@ -40,18 +40,30 @@ export default function Chat() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0} style={{ flex: 1, backgroundColor: colors.surface }}>
+      {/* Sticky header */}
       <View style={{ paddingTop: insets.top, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.md }}>
-          <Text style={{ color: colors.onSurface, fontSize: 22, fontWeight: "900" }}>💬 {t("chat")}</Text>
+        <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.md, flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 20 }}>💬</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.onSurface, fontSize: 18, fontWeight: "900" }}>Chat classe</Text>
+            <Text style={{ color: colors.muted, fontSize: 11 }}>{messages.filter((m) => !m.deleted).length} messaggi</Text>
+          </View>
         </View>
         {pinned.length > 0 && (
           <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
-            <Text style={{ color: colors.muted, fontSize: 11, fontWeight: "700", marginBottom: spacing.xs }}>📌 PINNED</Text>
-            {pinned.map((m) => (
-              <View key={m.id} style={{ backgroundColor: colors.brandTertiary, padding: spacing.sm, borderRadius: radius.md, marginBottom: spacing.xs }}>
-                <Text style={{ color: colors.onBrandTertiary, fontSize: 12 }} numberOfLines={2}>{m.text}</Text>
+            <View style={{
+              flexDirection: "row", alignItems: "center", gap: spacing.sm,
+              backgroundColor: colors.surfaceTertiary, padding: spacing.sm, paddingHorizontal: spacing.md,
+              borderRadius: radius.md, borderWidth: 1, borderColor: colors.brandTertiary,
+            }}>
+              <Text style={{ fontSize: 14 }}>📌</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.onSurfaceTertiary, fontSize: 10, fontWeight: "800" }}>MESSAGGIO FISSATO</Text>
+                <Text style={{ color: colors.onSurface, fontSize: 12 }} numberOfLines={2}>{pinned[0].text}</Text>
               </View>
-            ))}
+            </View>
           </View>
         )}
       </View>
@@ -60,41 +72,41 @@ export default function Chat() {
         ref={listRef}
         data={messages}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
         ListEmptyComponent={<EmptyState emoji="💬" text={t("empty_chat")} />}
         renderItem={({ item }) => {
           const mine = item.author_id === user?.id;
           const original = item.reply_to ? messages.find((x) => x.id === item.reply_to) : null;
           return (
-            <View style={{ flexDirection: "row", justifyContent: mine ? "flex-end" : "flex-start" }}>
+            <View style={{ flexDirection: "row", justifyContent: mine ? "flex-end" : "flex-start", alignItems: "flex-end", gap: spacing.xs }}>
               {!mine && <Avatar name={item.author_name || "?"} size={32} />}
               <Pressable
                 testID={`msg-${item.id}`}
-                onLongPress={() => {
-                  if (item.deleted) return;
-                  const canDel = isAdmin || mine;
-                  const actions = ["👍 Reagisci", "↩️ Rispondi", isAdmin ? "📌 Pin" : null, canDel ? "🗑️ Elimina" : null].filter(Boolean).join("\n");
-                  alert(actions);
-                }}
                 onPress={() => !item.deleted && setReplyTo(item)}
                 style={{
-                  maxWidth: "78%", marginHorizontal: spacing.sm,
+                  maxWidth: "78%",
                   backgroundColor: mine ? colors.brandPrimary : colors.surfaceSecondary,
-                  padding: spacing.md, borderRadius: radius.md, borderBottomRightRadius: mine ? 4 : radius.md, borderBottomLeftRadius: mine ? radius.md : 4,
+                  padding: spacing.md,
+                  borderRadius: radius.lg,
+                  borderBottomRightRadius: mine ? 6 : radius.lg,
+                  borderBottomLeftRadius: mine ? radius.lg : 6,
+                  borderWidth: mine ? 0 : 1, borderColor: colors.border,
                 }}
               >
                 {!mine && <Text style={{ color: colors.brandPrimary, fontWeight: "800", fontSize: 12, marginBottom: spacing.xs }}>{item.author_name}</Text>}
                 {original && (
-                  <View style={{ backgroundColor: mine ? "rgba(255,255,255,0.2)" : colors.surfaceTertiary, padding: spacing.xs, borderRadius: 6, marginBottom: spacing.xs }}>
-                    <Text style={{ color: mine ? colors.onBrandPrimary : colors.onSurfaceTertiary, fontSize: 11 }} numberOfLines={1}>↩️ {original.text}</Text>
+                  <View style={{ backgroundColor: mine ? "rgba(255,255,255,0.18)" : colors.surfaceTertiary, padding: spacing.xs + 2, borderRadius: 8, marginBottom: spacing.xs, borderLeftWidth: 3, borderLeftColor: mine ? "rgba(255,255,255,0.7)" : colors.brandPrimary }}>
+                    <Text style={{ color: mine ? colors.onBrandPrimary : colors.onSurfaceTertiary, fontSize: 11, fontWeight: "700" }} numberOfLines={1}>{original.author_name}</Text>
+                    <Text style={{ color: mine ? colors.onBrandPrimary : colors.onSurface, fontSize: 11 }} numberOfLines={1}>{original.text}</Text>
                   </View>
                 )}
                 {item.deleted ? (
-                  <Text style={{ color: mine ? colors.onBrandPrimary : colors.muted, fontStyle: "italic" }}>{t("messageDeleted")}</Text>
+                  <Text style={{ color: mine ? "rgba(255,255,255,0.7)" : colors.muted, fontStyle: "italic" }}>{t("messageDeleted")}</Text>
                 ) : (
-                  <Text style={{ color: mine ? colors.onBrandPrimary : colors.onSurface }}>{item.text}</Text>
+                  <Text style={{ color: mine ? colors.onBrandPrimary : colors.onSurface, fontSize: 14, lineHeight: 20 }}>{item.text}</Text>
                 )}
-                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs }}>
+                <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.xs, alignItems: "center" }}>
+                  <Text style={{ color: mine ? "rgba(255,255,255,0.7)" : colors.muted, fontSize: 10 }}>{new Date(item.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</Text>
                   {!item.deleted && (
                     <>
                       <Pressable testID={`react-${item.id}`} onPress={() => react(item.id, "👍")}><Text style={{ fontSize: 12 }}>👍</Text></Pressable>
@@ -111,16 +123,22 @@ export default function Chat() {
 
       {replyTo && (
         <View style={{ padding: spacing.sm, backgroundColor: colors.surfaceTertiary, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-          <Text style={{ flex: 1, color: colors.muted, fontSize: 12 }} numberOfLines={1}>↩️ {replyTo.author_name}: {replyTo.text}</Text>
-          <Pressable onPress={() => setReplyTo(null)}><Text style={{ color: colors.error, fontWeight: "700" }}>✕</Text></Pressable>
+          <Text style={{ color: colors.brandPrimary, fontSize: 16 }}>↩️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.onSurfaceTertiary, fontSize: 11, fontWeight: "700" }}>{replyTo.author_name}</Text>
+            <Text style={{ color: colors.onSurface, fontSize: 12 }} numberOfLines={1}>{replyTo.text}</Text>
+          </View>
+          <Pressable onPress={() => setReplyTo(null)}><Text style={{ color: colors.error, fontWeight: "700", fontSize: 18 }}>✕</Text></Pressable>
         </View>
       )}
 
-      <View style={{ flexDirection: "row", gap: spacing.sm, padding: spacing.md, paddingBottom: Math.max(spacing.md, insets.bottom), borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
+      <View style={{ flexDirection: "row", gap: spacing.sm, padding: spacing.md, paddingBottom: Math.max(spacing.md, insets.bottom), borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surfaceSecondary, alignItems: "center" }}>
         <View style={{ flex: 1 }}>
           <Input testID="chat-input" value={text} onChangeText={setText} placeholder={t("typeMessage")} />
         </View>
-        <Button testID="chat-send-button" label={t("send")} onPress={send} />
+        <Pressable testID="chat-send-button" onPress={send} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: colors.onBrandPrimary, fontSize: 20, fontWeight: "900" }}>↑</Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );

@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/src/api";
 import { useI18n } from "@/src/i18n";
-import { Avatar } from "@/src/ui";
+import { Avatar, IconTile, ListRow } from "@/src/ui";
 import { radius, spacing, useTheme } from "@/src/theme";
 
 export default function More() {
@@ -28,21 +28,31 @@ export default function More() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xxl, padding: spacing.lg, gap: spacing.md }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.md }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.md,
+        backgroundColor: colors.surfaceSecondary, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
+      }}>
         <Avatar name={`${user?.name || ""} ${user?.surname || ""}`} size={56} />
-        <View>
-          <Text style={{ color: colors.onSurface, fontWeight: "900", fontSize: 20 }}>{user?.name} {user?.surname}</Text>
-          <Text style={{ color: colors.muted }}>@{user?.username} • {user?.role}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.onSurface, fontWeight: "900", fontSize: 18 }}>{user?.name} {user?.surname}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>@{user?.username}</Text>
+        </View>
+        <View style={{ paddingHorizontal: spacing.sm, paddingVertical: 3, backgroundColor: colors.brandTertiary, borderRadius: radius.pill }}>
+          <Text style={{ color: colors.onBrandTertiary, fontWeight: "800", fontSize: 10 }}>{user?.role}</Text>
         </View>
       </View>
-      {items.map((it) => (
-        <Pressable key={it.key} testID={`more-${it.key}`} onPress={() => router.push(it.route as any)}
-          style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, padding: spacing.lg, backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ fontSize: 26 }}>{it.emoji}</Text>
-          <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 16, flex: 1 }}>{it.label}</Text>
-          <Text style={{ color: colors.muted }}>›</Text>
-        </Pressable>
+
+      {items.map((it, i) => (
+        <ListRow
+          key={it.key}
+          testID={`more-${it.key}`}
+          emoji={it.emoji}
+          index={i}
+          title={it.label}
+          onPress={() => router.push(it.route as any)}
+        />
       ))}
+
       <Pressable testID="logout-button" onPress={logout} style={{ padding: spacing.lg, backgroundColor: colors.error, borderRadius: radius.pill, alignItems: "center", marginTop: spacing.lg }}>
         <Text style={{ color: colors.onError, fontWeight: "800" }}>{t("logout")}</Text>
       </Pressable>

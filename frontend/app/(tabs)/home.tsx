@@ -1,19 +1,28 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, Text, View, Pressable } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiFetch, useAuth } from "@/src/api";
 import { useI18n } from "@/src/i18n";
-import { Avatar, Card, EmptyState, SectionTitle } from "@/src/ui";
+import { Avatar, Card, EmptyState, IconTile, SectionTitle } from "@/src/ui";
 import { radius, spacing, useTheme } from "@/src/theme";
 
 const QUICK = [
-  { key: "materials", emoji: "📚", label: "materials", route: "/(tabs)/materials" as const },
-  { key: "calendar", emoji: "📅", label: "calendar", route: "/(tabs)/calendar" as const },
-  { key: "ann", emoji: "📢", label: "announcements", route: "/more/announcements" as const },
-  { key: "chat", emoji: "💬", label: "chat", route: "/(tabs)/chat" as const },
-  { key: "class", emoji: "👥", label: "classMembers", route: "/more/members" as const },
+  { key: "materials", emoji: "📚", label: "materials", route: "/(tabs)/materials", tile: 0 },
+  { key: "calendar", emoji: "📅", label: "calendar", route: "/(tabs)/calendar", tile: 2 },
+  { key: "ann", emoji: "📢", label: "announcements", route: "/more/announcements", tile: 1 },
+  { key: "chat", emoji: "💬", label: "chat", route: "/(tabs)/chat", tile: 3 },
+  { key: "class", emoji: "👥", label: "classMembers", route: "/more/members", tile: 4 },
+  { key: "polls", emoji: "📊", label: "polls", route: "/more/polls", tile: 5 },
 ];
+
+function dateLabel(iso: string): { day: string; month: string; full: string } {
+  const d = new Date(iso + (iso.length <= 10 ? "T00:00:00" : ""));
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = d.toLocaleDateString("it-IT", { month: "short" }).replace(".", "").toUpperCase();
+  const full = d.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
+  return { day, month, full };
+}
 
 export default function Home() {
   const { colors } = useTheme();
@@ -37,86 +46,144 @@ export default function Home() {
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const upcoming = events.filter((e) => e.date >= new Date().toISOString().slice(0, 10)).slice(0, 3);
-  const nextHw = hw.filter((h) => !h.completed && h.due_date >= new Date().toISOString().slice(0, 10)).slice(0, 3);
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = events.filter((e) => e.date >= today).slice(0, 3);
+  const nextHw = hw.filter((h) => !h.completed && h.due_date >= today).slice(0, 3);
   const latestAnn = ann[0];
-  const latestNotes = notes.slice(0, 3);
+  const latestNotes = notes.slice(0, 4);
 
   return (
-    <ScrollView
-      testID="home-scroll"
-      style={{ flex: 1, backgroundColor: colors.surface }}
-      contentContainerStyle={{ padding: spacing.lg, paddingTop: insets.top + spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={colors.brandPrimary} />}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.muted, fontSize: 13 }}>{cls?.name || "Classe"}</Text>
-          <Text style={{ color: colors.onSurface, fontSize: 24, fontWeight: "900" }}>Ciao, {user?.name} 👋</Text>
-        </View>
-        <Pressable testID="home-profile-avatar" onPress={() => router.push("/more/profile")}>
-          <Avatar name={`${user?.name || ""} ${user?.surname || ""}`} size={48} />
-        </Pressable>
-      </View>
-
-      <View>
-        <SectionTitle>{t("quickAccess")}</SectionTitle>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
-          {QUICK.map((q) => (
-            <Pressable key={q.key} testID={`quick-${q.key}`} onPress={() => router.push(q.route as any)}
-              style={{ width: "31%", aspectRatio: 1, backgroundColor: colors.brandTertiary, borderRadius: radius.lg, alignItems: "center", justifyContent: "center", gap: spacing.xs }}>
-              <Text style={{ fontSize: 28 }}>{q.emoji}</Text>
-              <Text style={{ color: colors.onBrandTertiary, fontWeight: "700", fontSize: 12 }}>{t(q.label as any)}</Text>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        testID="home-scroll"
+        contentContainerStyle={{ paddingBottom: spacing.xxxl, gap: spacing.lg, paddingTop: insets.top + spacing.md }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={colors.brandPrimary} />}
+      >
+        {/* Top pill: class name + avatar */}
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <View style={{
+            flexDirection: "row", alignItems: "center", gap: spacing.md,
+            backgroundColor: colors.surfaceSecondary, padding: spacing.sm, paddingLeft: spacing.md,
+            borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border,
+          }}>
+            <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: colors.onBrandPrimary, fontWeight: "900" }}>{(cls?.name?.[0] || "C").toUpperCase()}</Text>
+            </View>
+            <Text style={{ flex: 1, color: colors.onSurface, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{cls?.name || "Classe"}</Text>
+            <Pressable testID="home-profile-avatar" onPress={() => router.push("/more/profile")}>
+              <Avatar name={`${user?.name || ""} ${user?.surname || ""}`} size={40} />
             </Pressable>
-          ))}
+          </View>
         </View>
-      </View>
 
-      <View>
-        <SectionTitle>{t("upcoming")}</SectionTitle>
-        {upcoming.length === 0 ? <EmptyState emoji="📅" text={t("empty_events")} /> :
-          upcoming.map((e) => (
-            <Card key={e.id} style={{ marginBottom: spacing.md }}>
-              <Text style={{ color: colors.brandPrimary, fontWeight: "800", fontSize: 12, textTransform: "uppercase" }}>{e.type}</Text>
-              <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 16, marginTop: spacing.xs }}>{e.title}</Text>
-              <Text style={{ color: colors.muted, marginTop: spacing.xs }}>{e.date}{e.time ? ` • ${e.time}` : ""}</Text>
-            </Card>
-          ))}
-      </View>
-
-      {nextHw.length > 0 && (
-        <View>
-          <SectionTitle>{t("homework")}</SectionTitle>
-          {nextHw.map((h) => (
-            <Card key={h.id} style={{ marginBottom: spacing.md }}>
-              <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 16 }}>{h.title}</Text>
-              <Text style={{ color: colors.muted, marginTop: spacing.xs }}>{h.due_date}</Text>
-            </Card>
-          ))}
+        {/* Greeting */}
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <Text style={{ color: colors.onSurface, fontSize: 28, fontWeight: "900" }}>Ciao, {user?.name}! 👋</Text>
+          <Text style={{ color: colors.muted, marginTop: spacing.xs }}>Benvenuto nella tua classe</Text>
         </View>
-      )}
 
-      {latestAnn && (
-        <View>
-          <SectionTitle>{t("latestAnnouncement")}</SectionTitle>
-          <Card>
-            {latestAnn.important && <Text style={{ color: colors.error, fontWeight: "900", fontSize: 12 }}>📌 {t("important")}</Text>}
-            <Text style={{ color: colors.onSurface, fontWeight: "800", fontSize: 18, marginTop: spacing.xs }}>{latestAnn.title}</Text>
-            <Text style={{ color: colors.onSurfaceSecondary, marginTop: spacing.sm }} numberOfLines={3}>{latestAnn.body}</Text>
-          </Card>
+        {/* Prossimo evento */}
+        {upcoming[0] && (
+          <View style={{ paddingHorizontal: spacing.lg }}>
+            <SectionTitle>{t("upcoming")}</SectionTitle>
+            <Pressable onPress={() => router.push("/(tabs)/calendar")}>
+              <Card>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                  {(() => { const d = dateLabel(upcoming[0].date); return (
+                    <View style={{ width: 56, borderRadius: radius.md, backgroundColor: colors.brandTertiary, paddingVertical: spacing.sm, alignItems: "center" }}>
+                      <Text style={{ color: colors.onBrandTertiary, fontWeight: "900", fontSize: 20 }}>{d.day}</Text>
+                      <Text style={{ color: colors.onBrandTertiary, fontWeight: "700", fontSize: 10 }}>{d.month}</Text>
+                    </View>
+                  ); })()}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.brandPrimary, fontWeight: "800", fontSize: 11, textTransform: "uppercase" }}>{upcoming[0].type}</Text>
+                    <Text style={{ color: colors.onSurface, fontWeight: "800", fontSize: 16, marginTop: 2 }}>{upcoming[0].title}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{dateLabel(upcoming[0].date).full}{upcoming[0].time ? ` • ${upcoming[0].time}` : ""}</Text>
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Ultimo annuncio */}
+        {latestAnn && (
+          <View style={{ paddingHorizontal: spacing.lg }}>
+            <SectionTitle>{t("latestAnnouncement")}</SectionTitle>
+            <Pressable onPress={() => router.push("/more/announcements")}>
+              <Card style={latestAnn.important ? { borderColor: colors.error, borderWidth: 2 } : undefined}>
+                {latestAnn.important && (
+                  <View style={{ alignSelf: "flex-start", backgroundColor: colors.error, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.sm, marginBottom: spacing.sm }}>
+                    <Text style={{ color: colors.onError, fontWeight: "900", fontSize: 10 }}>📌 {t("important")}</Text>
+                  </View>
+                )}
+                <Text style={{ color: colors.onSurface, fontWeight: "800", fontSize: 16 }}>{latestAnn.title}</Text>
+                <Text style={{ color: colors.onSurfaceSecondary, marginTop: spacing.sm, lineHeight: 20 }} numberOfLines={3}>{latestAnn.body}</Text>
+              </Card>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Prossimi compiti */}
+        {nextHw.length > 0 && (
+          <View style={{ paddingHorizontal: spacing.lg }}>
+            <SectionTitle action={<Pressable onPress={() => router.push("/more/homework")}><Text style={{ color: colors.brandPrimary, fontWeight: "700" }}>Leggi tutto</Text></Pressable>}>{t("homework")}</SectionTitle>
+            <View style={{ gap: spacing.sm }}>
+              {nextHw.map((h) => {
+                const d = dateLabel(h.due_date);
+                return (
+                  <Card key={h.id}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                      <View style={{ width: 44, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary, alignItems: "center", paddingVertical: 6 }}>
+                        <Text style={{ color: colors.onSurfaceTertiary, fontWeight: "900" }}>{d.day}</Text>
+                        <Text style={{ color: colors.onSurfaceTertiary, fontSize: 10, fontWeight: "700" }}>{d.month}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.onSurface, fontWeight: "700" }}>{h.title}</Text>
+                        {h.description ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{h.description}</Text> : null}
+                      </View>
+                    </View>
+                  </Card>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Quick access */}
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <SectionTitle>{t("quickAccess")}</SectionTitle>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
+            {QUICK.map((q) => (
+              <Pressable key={q.key} testID={`quick-${q.key}`} onPress={() => router.push(q.route as any)}
+                style={{ width: "31%", aspectRatio: 1, backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center", gap: spacing.xs }}>
+                <IconTile emoji={q.emoji} index={q.tile} size={44} />
+                <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 12, marginTop: 2 }}>{t(q.label as any)}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
-      )}
 
-      <View>
-        <SectionTitle>{t("latestNotes")}</SectionTitle>
-        {latestNotes.length === 0 ? <EmptyState emoji="📚" text={t("empty_notes")} /> :
-          latestNotes.map((n) => (
-            <Card key={n.id} style={{ marginBottom: spacing.md }}>
-              <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 15 }}>{n.title}</Text>
-              <Text style={{ color: colors.muted, marginTop: spacing.xs, fontSize: 12 }}>{t("uploadedBy")}: {n.author_name}</Text>
-            </Card>
-          ))}
-      </View>
-    </ScrollView>
+        {/* Ultimi appunti */}
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <SectionTitle action={<Pressable onPress={() => router.push("/(tabs)/materials")}><Text style={{ color: colors.brandPrimary, fontWeight: "700" }}>Vedi tutti</Text></Pressable>}>{t("latestNotes")}</SectionTitle>
+          {latestNotes.length === 0 ? <EmptyState emoji="📚" text={t("empty_notes")} /> : (
+            <View style={{ gap: spacing.sm }}>
+              {latestNotes.map((n, i) => (
+                <Card key={n.id}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                    <IconTile emoji="📄" index={i} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.onSurface, fontWeight: "700" }} numberOfLines={1}>{n.title}</Text>
+                      <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{t("uploadedBy")}: {n.author_name}</Text>
+                    </View>
+                  </View>
+                </Card>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }

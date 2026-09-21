@@ -1,27 +1,28 @@
-// ClassSync design tokens - light + dark themes matching design_guidelines.json
+// ClassSync design tokens - refined light + dark, mockup-inspired
 import { useMemo } from "react";
 import { Appearance, StyleSheet, useColorScheme } from "react-native";
 
 export type ColorScheme = "light" | "dark";
 
 const light = {
-  surface: "#FFFFFF",
+  // Softer cool-gray backdrop lets white cards pop like in the mockups
+  surface: "#F4F6FB",
   onSurface: "#0F172A",
-  surfaceSecondary: "#F5F3FF",
-  onSurfaceSecondary: "#1E1B4B",
-  surfaceTertiary: "#EDE9FE",
-  onSurfaceTertiary: "#312E81",
-  surfaceInverse: "#1E1B4B",
+  surfaceSecondary: "#FFFFFF",
+  onSurfaceSecondary: "#0F172A",
+  surfaceTertiary: "#EEF2FF",
+  onSurfaceTertiary: "#3730A3",
+  surfaceInverse: "#0F172A",
   onSurfaceInverse: "#FFFFFF",
   muted: "#64748B",
 
-  brand: "#7C3AED",
+  brand: "#4F46E5",
   onBrand: "#FFFFFF",
-  brandPrimary: "#7C3AED",
+  brandPrimary: "#4F46E5",
   onBrandPrimary: "#FFFFFF",
   brandSecondary: "#3B82F6",
   onBrandSecondary: "#FFFFFF",
-  brandTertiary: "#E0E7FF",
+  brandTertiary: "#EEF2FF",
   onBrandTertiary: "#3730A3",
 
   success: "#10B981",
@@ -33,30 +34,30 @@ const light = {
   info: "#3B82F6",
   onInfo: "#FFFFFF",
 
-  border: "#E2E8F0",
+  border: "#E5E9F2",
   borderStrong: "#CBD5E1",
-  divider: "#F1F5F9",
+  divider: "#EEF0F7",
 };
 
 const dark: typeof light = {
-  surface: "#0B0B1A",
+  surface: "#0B1220",
   onSurface: "#F8FAFC",
-  surfaceSecondary: "#141428",
-  onSurfaceSecondary: "#E2E8F0",
-  surfaceTertiary: "#1E1B3D",
-  onSurfaceTertiary: "#C4B5FD",
-  surfaceInverse: "#F5F3FF",
-  onSurfaceInverse: "#1E1B4B",
+  surfaceSecondary: "#141C2E",
+  onSurfaceSecondary: "#F1F5F9",
+  surfaceTertiary: "#1E2740",
+  onSurfaceTertiary: "#C7D2FE",
+  surfaceInverse: "#F8FAFC",
+  onSurfaceInverse: "#0B1220",
   muted: "#94A3B8",
 
-  brand: "#A78BFA",
-  onBrand: "#0B0B1A",
-  brandPrimary: "#A78BFA",
-  onBrandPrimary: "#0B0B1A",
+  brand: "#818CF8",
+  onBrand: "#0B1220",
+  brandPrimary: "#818CF8",
+  onBrandPrimary: "#0B1220",
   brandSecondary: "#60A5FA",
-  onBrandSecondary: "#0B0B1A",
-  brandTertiary: "#312E81",
-  onBrandTertiary: "#E0E7FF",
+  onBrandSecondary: "#0B1220",
+  brandTertiary: "#1F2A4A",
+  onBrandTertiary: "#C7D2FE",
 
   success: "#34D399",
   onSuccess: "#052E20",
@@ -65,7 +66,7 @@ const dark: typeof light = {
   error: "#F87171",
   onError: "#3B0808",
   info: "#60A5FA",
-  onInfo: "#0B0B1A",
+  onInfo: "#0B1220",
 
   border: "#1F2A44",
   borderStrong: "#334155",
@@ -83,7 +84,7 @@ export const themes: { light: ThemeColors; dark: ThemeColors } = { light, dark }
 export function setColorScheme(scheme: ColorScheme | null) {
   Appearance.setColorScheme?.(scheme ?? "unspecified");
 }
-setColorScheme?.(null); // follow device
+setColorScheme?.(null);
 
 export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
   const system = useColorScheme();
@@ -99,5 +100,18 @@ export function makeStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.Name
     return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
   };
 }
+
+// Tinted "icon tile" palette used across subject rows and quick actions.
+// Same order as default subjects seeded server-side. Wraps around beyond index 6.
+export const tilePalette: { bg: string; fg: string }[] = [
+  { bg: "#DBEAFE", fg: "#1D4ED8" }, // Matematica - blue
+  { bg: "#FEE2E2", fg: "#B91C1C" }, // Italiano - red
+  { bg: "#FEF3C7", fg: "#B45309" }, // Storia - amber
+  { bg: "#DCFCE7", fg: "#166534" }, // Inglese - green
+  { bg: "#EDE9FE", fg: "#5B21B6" }, // Informatica - violet
+  { bg: "#FCE7F3", fg: "#BE185D" }, // Fisica - pink
+  { bg: "#E0F2FE", fg: "#075985" }, // Scienze - sky
+  { bg: "#FFEDD5", fg: "#9A3412" }, // extra - orange
+];
 
 export const colors = light;
