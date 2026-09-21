@@ -1,0 +1,38 @@
+{
+  "summary": "Backend: 36/38 pytest tests passing (94.7%). All auth, provisional lock, class-setup atomicity, invite-code enforcement, RBAC (STUDENTE 403s), admin CRUD, homework per-user toggle, chat + muting + soft-delete, announcement react/read, duck-jump bounds + personal-best + leaderboard, /auth/me + disabled-user 401 all pass. FAIL: PATCH /api/class returns 422 when only 'description' is sent because ClassConfigIn.name has no default. This cascades: admin_log 'class.updated' never recorded. Frontend: all in-scope flows verified on mobile viewport (375x667). Login screen renders (ClassSync heading, Accedi, Registrati link). Register: invite-code field is HIDDEN when no class, VISIBLE after class exists. First-user register auto-navigates to /setup-class → invite code (6 hex chars) shown at testID invite-code-display (verified '35F245') → Continua goes to Home. Bottom tabs Home/Materiale/Calendario/Chat/Altro all present. Home greeting + quick-access grid correct. Altro shows 'Pannello Admin' for ADMIN, absent for STUDENTE (Luca). Chat send works (message appears). Settings IT/EN switch flips labels (Lingua→Language, Italiano→Italian, Tema→Theme).",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "PATCH /api/class", "issue": "Returns 422 for partial updates. ClassConfigIn.name is required (no default), so sending only e.g. {description:'x'} fails Pydantic validation. Spec requires partial update.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "GET /api/admin/log", "issue": "Cascading from above: 'class.updated' entry never appears in the log because PATCH /api/class currently 422s on partial payloads."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "more/settings.tsx", "issues": ["Screen header shows raw key 'settings' (lowercase, untranslated) instead of localized title ('Impostazioni' / 'Settings').", "Theme subtitle 'Segue automaticamente le impostazioni del sistema.' remains Italian after switching to English — missing EN translation."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_classsync_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix ClassConfigIn to support partial PATCH: create a separate ClassPatchIn (or make all fields Optional with defaults) OR handle body as dict via Body(...) in PATCH /api/class. Ensure _log_admin('class.updated', ...) still fires.",
+    "Localize the settings screen title (route header uses raw key 'settings').",
+    "Add EN translation for the theme description string 'Segue automaticamente le impostazioni del sistema.'"
+  ],
+  "critical_code_review_comments": [
+    "ClassConfigIn is reused for both POST /class/setup (creation) and PATCH /class (partial update). Since name is required, the schema cannot support partial updates. Split into ClassCreateIn / ClassPatchIn.",
+    "server.py is ~980 lines; consider splitting into routers (auth, class, chat, homework, etc.) per code_review_guidelines (>700 line threshold).",
+    "PATCH /users/{id} uses body.dict() without exclude_unset, which sends None for unspecified fields. That would overwrite existing muted/role/disabled with None. In practice this test passed because only the intended field was included, but it's fragile — switch to body.dict(exclude_unset=True).",
+    "regen_invite response returns the new plaintext code but never logs the previous invite invalidation with metadata — fine for security, but no admin_log verification of code rotation."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "94.7%", "frontend": "100% of in-scope items"},
+  "seed_data_creation": "Registered marco/password123 (ADMIN of class '4B Info', invite 35F245) and luca/password123 (STUDENTE). DB was reset at test start via mongosh dropDatabase() and reset again by pytest fixture.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Pytest suite is at /app/backend/tests/test_classsync_api.py — its module-level fixture drops the DB and restarts backend, so it is idempotent. IMPORTANT: run with `-n 0` to disable xdist parallelism (state is sequential). After E1 fixes PATCH /api/class, only these two tests will need to re-run: TestAdminActions::test_patch_class_partial and TestAdminLog::test_log_has_entries. Current invite in DB (if not reset) is 35F245.",
+  "rca_of_issue": "PATCH /api/class 422 RCA: In server.py line 182, `class ClassConfigIn` defines `name: str` as required. The PATCH handler (line 483) uses this same model, so FastAPI/Pydantic rejects any payload missing 'name'. Reproduction: `curl -X PATCH $URL/api/class -H 'Authorization: Bearer <admin>' -H 'Content-Type: application/json' -d '{\"description\":\"x\"}'` → 422. Mitigation: add a dedicated ClassPatchIn with all Optional fields, or make `name: Optional[str] = None` on ClassConfigIn (with an explicit not-null check in POST /class/setup). Then PATCH /api/class's `body.dict(exclude_unset=True)` will correctly persist only the supplied fields, and _log_admin('class.updated', upd) will begin appearing in admin_log."
+}

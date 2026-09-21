@@ -1,0 +1,157 @@
+{
+  "app_name": "ClassSync",
+  "personality": "4 Tactile / Playful LIGHT",
+  "personality_one_liner": "A youthful, energetic, and highly touchable digital classroom that turns managing homework and class chat into a modern, engaging experience.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#0F172A",
+    "surfaceSecondary": "#F5F3FF",
+    "onSurfaceSecondary": "#1E1B4B",
+    "surfaceTertiary": "#EDE9FE",
+    "onSurfaceTertiary": "#312E81",
+    "surfaceInverse": "#1E1B4B",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#7C3AED",
+    "onBrand": "#FFFFFF",
+    "brandPrimary": "#7C3AED",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#3B82F6",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#E0E7FF",
+    "onBrandTertiary": "#3730A3",
+    "success": "#10B981",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F59E0B",
+    "onWarning": "#FFFFFF",
+    "error": "#EF4444",
+    "onError": "#FFFFFF",
+    "info": "#3B82F6",
+    "onInfo": "#FFFFFF",
+    "border": "#E2E8F0",
+    "borderStrong": "#CBD5E1",
+    "divider": "#F1F5F9",
+    "muted": "#64748B"
+  },
+  "typography": {
+    "displayFontFamily": "Plus Jakarta Sans",
+    "textFontFamily": "Nunito",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous touch targets, rounded layouts, soft clustering instead of rigid lists.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "pill": 999
+  },
+  "shadow_tier": "2",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Sticky headers over scrolling homework lists",
+      "Bottom tab bar",
+      "Floating Action Buttons (FAB)"
+    ],
+    "dont's": [
+      "Every card in a list",
+      "Form inputs"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Home Dashboard",
+      "purpose": "Provide a quick overview of urgent deadlines, recent announcements, and quick access to games and members.",
+      "states": {
+        "loading": "Centered brand-colored spinner with youthful bounce animation.",
+        "empty": "Illustration of an empty desk; 'Nothing happening right now!'",
+        "error": "Oops! Could not load the class data. Retry button."
+      },
+      "layout": "Header with Class Logo (left) and notifications/profile (right). 'Up Next' hero card at the top (urgent homework or test). 2-column quick action grid for 'Members' and 'Duck Jump' minigame. Horizontal scrolling list for Announcements. Floating Action Button for Admins to post."
+    },
+    {
+      "name": "Calendar & Homework",
+      "purpose": "A triage-based hub to see what is due, sorted by urgency.",
+      "states": {
+        "loading": "Skeleton of a weekly calendar strip and task cards.",
+        "empty": "Backpack on a desk illustration; 'All caught up! No homework due.'",
+        "error": "Failed to load schedule. Tap to retry."
+      },
+      "layout": "Swipable weekly calendar strip at the top. Below, a list of assignment cards. Each card has a color-coded subject chip, title, due date, and a circular checkbox for personal completion status. Sticky FAB to add homework (Admin)."
+    },
+    {
+      "name": "Class Chat",
+      "purpose": "Central communication hub for students to chat, react, and view pinned messages.",
+      "states": {
+        "loading": "Message skeletons.",
+        "empty": "Illustration of two friends; 'Start the conversation!'",
+        "error": "Couldn't connect to chat. Retry."
+      },
+      "layout": "Pinned messages at the top in a horizontal scroll or a collapsed accordion. Standard chat interface below with message bubbles (rounded corners, brand-tinted for user, surfaceSecondary for others). Input field at the bottom with attachment (Materials) button."
+    },
+    {
+      "name": "Admin Panel & Settings",
+      "purpose": "Allow the class representative to customize the class experience and manage users.",
+      "states": {
+        "loading": "Settings list skeleton.",
+        "empty": "N/A - always has static config options.",
+        "error": "Failed to load settings."
+      },
+      "layout": "List layout with tinted icon containers. Sections: Class Customization (Color picker, Logo upload, Name), Subjects Management, Users List, Invite Code sharing. Language Switch (IT/EN). Logout at the bottom."
+    }
+  ],
+  "images": {
+    "onboarding_hero": {
+      "url": "https://images.unsplash.com/photo-1460518451285-97b6aa326961?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NjV8MHwxfHNlYXJjaHwyfHxoaWdoJTIwc2Nob29sJTIwdGVlbnMlMjBzdHVkeWluZyUyMGZyaWVuZHN8ZW58MHx8fHwxNzkwMDI1NzQ1fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "High school friends studying together"
+    },
+    "duck_jump_cover": {
+      "url": "https://images.pexels.com/photos/28849120/pexels-photo-28849120.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Duck mascot for the minigame"
+    },
+    "empty_homework": {
+      "url": "https://images.pexels.com/photos/5905436/pexels-photo-5905436.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "School desk with opened books and a backpack"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Build the app in React Native using Expo.",
+    "Implement bottom tab navigation: Home, Calendar, Materials, Chat.",
+    "Ensure 'blu/viola' (Blue/Purple) is used as the default brand color, as explicitly requested by the user. Use #7C3AED (Violet) for primary and #3B82F6 (Blue) for secondary.",
+    "Design with the 'Tactile / Playful' personality. Use chunky rounded cards (lg/pill radius), soft shadow tiers, and slightly offset asymmetrical layouts for a youthful vibe.",
+    "Implement language switching (Italian/English). Ensure UI can accommodate both lengths.",
+    "Calendar should have a weekly swipable view on top, followed by interactive task cards with personal completion checkboxes.",
+    "For Chat, ensure pinned messages are clearly visible at the top, and include reaction placeholders.",
+    "Duck Jump minigame is a feature on the Home Dashboard (or a separate modal), ensure it has a leaderboard UI.",
+    "Admin panel must include options to change colors (just a UI mock of a color picker is fine) and view the invite code.",
+    "Do NOT use indigo/purple for other generic apps, but HERE it is allowed because the user literally specified 'blu/viola come default'."
+  ]
+}
