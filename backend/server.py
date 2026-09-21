@@ -895,6 +895,142 @@ async def leaderboard(user: dict = Depends(current_user)):
 
 
 # ---------------------------------------------------------------------------
+# POLLS (sondaggi)
+# ---------------------------------------------------------------------------
+class PollIn(BaseModel):
+    question: str = Field(min_length=1, max_length=200)
+    options: List[str] = Field(min_length=2, max_length=8)
+    multi: bool = False  # single-choice for MVP
+
+
+class VoteIn(BaseModel):
+    option_index: int
+
+
+def _poll_public(p: dict, user_id: str) -> dict:
+    votes: dict = p.get("votes") or {}  # {option_index_str: [user_ids]}
+    total = sum(len(v) for v in votes.values())
+    my_choice = None
+    for k, ids in votes.items():
+        if user_id in ids:
+            my_choice = int(k)
+            break
+    results = []
+    for i, opt in enumerate(p["options"]):
+        n = len(votes.get(str(i), []))
+        results.append({"index": i, "text": opt, "count": n, "pct": round(100 * n / total) if total else 0})
+    return {
+        "id": p["id"], "question": p["question"], "options": p["options"],
+        "results": results, "total": total, "my_choice": my_choice,
+        "closed": p.get("closed", False),
+        "author_name": p.get("author_name"),
+        "created_at": p.get("created_at"),
+    }
+
+
+@api.get("/polls")
+async def list_polls(user: dict = Depends(current_user)):
+    cursor = db.polls.find({"class_id": user["class_id"]}, {"_id": 0}).sort("created_at", -1)
+    return {"polls": [_poll_public(p, user["id"]) async for p in cursor]}
+
+
+@api.post("/polls")
+async def create_poll(body: PollIn, admin: dict = Depends(require_admin)):
+    doc = {
+        "id": new_id(),
+        "class_id": admin["class_id"],
+        "question": body.question.strip(),
+        "options": [o.strip() for o in body.options if o.strip()],
+        "votes": {},
+        "closed": False,
+        "author_id": admin["id"],
+        "author_name": f"{admin.get('name','')} {admin.get('surname','')}".strip(),
+        "created_at": iso(now_utc()),
+    }
+    if len(doc["options"]) < 2:
+        raise HTTPException(status_code=400, detail="Servono almeno 2 opzioni")
+    await db.polls.insert_one(doc)
+    return {"poll": _poll_public(doc, admin["id"])}
+
+
+@api.post("/polls/{pid}/vote")
+async def vote_poll(pid: str, body: VoteIn, user: dict = Depends(current_user)):
+    poll = await db.polls.find_one({"id": pid, "class_id": user["class_id"]})
+    if not poll:
+        raise HTTPException(status_code=404, detail="Sondaggio non trovato")
+    if poll.get("closed"):
+        raise HTTPException(status_code=400, detail="Sondaggio chiuso")
+    if body.option_index < 0 or body.option_index >= len(poll["options"]):
+        raise HTTPException(status_code=400, detail="Opzione non valida")
+    # Remove user from all options, then add to selected one (single-choice)
+    votes: dict = poll.get("votes") or {}
+    for k in list(votes.keys()):
+        votes[k] = [u for u in votes[k] if u != user["id"]]
+    votes.setdefault(str(body.option_index), []).append(user["id"])
+    await db.polls.update_one({"id": pid}, {"$set": {"votes": votes}})
+    fresh = await db.polls.find_one({"id": pid}, {"_id": 0})
+    return {"poll": _poll_public(fresh, user["id"])}
+
+
+@api.post("/polls/{pid}/close")
+async def close_poll(pid: str, admin: dict = Depends(require_admin)):
+    r = await db.polls.update_one({"id": pid, "class_id": admin["class_id"]}, {"$set": {"closed": True}})
+    if r.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Sondaggio non trovato")
+    return {"ok": True}
+
+
+@api.delete("/polls/{pid}")
+async def delete_poll(pid: str, admin: dict = Depends(require_admin)):
+    r = await db.polls.delete_one({"id": pid, "class_id": admin["class_id"]})
+    await _log_admin(admin["id"], "poll.deleted", {"id": pid})
+    return {"deleted": r.deleted_count}
+
+
+# ---------------------------------------------------------------------------
+# BACHECA (board) - mini-avvisi da tutti
+# ---------------------------------------------------------------------------
+class BoardIn(BaseModel):
+    text: str = Field(min_length=1, max_length=280)
+    color: Optional[str] = None  # sticky-note color hint
+
+
+@api.get("/board")
+async def list_board(user: dict = Depends(current_user)):
+    cursor = db.board.find({"class_id": user["class_id"]}, {"_id": 0}).sort("created_at", -1).limit(100)
+    return {"notes": [n async for n in cursor]}
+
+
+@api.post("/board")
+async def create_board(body: BoardIn, user: dict = Depends(current_user)):
+    if user.get("muted"):
+        raise HTTPException(status_code=403, detail="Sei stato silenziato")
+    doc = {
+        "id": new_id(),
+        "class_id": user["class_id"],
+        "text": body.text.strip(),
+        "color": body.color,
+        "author_id": user["id"],
+        "author_name": f"{user.get('name','')} {user.get('surname','')}".strip(),
+        "created_at": iso(now_utc()),
+    }
+    await db.board.insert_one(doc)
+    doc.pop("_id", None)
+    return {"note": doc}
+
+
+@api.delete("/board/{nid}")
+async def delete_board(nid: str, user: dict = Depends(current_user)):
+    note = await db.board.find_one({"id": nid, "class_id": user["class_id"]})
+    if not note:
+        raise HTTPException(status_code=404, detail="Nota non trovata")
+    if user["role"] != "ADMIN" and note["author_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Non autorizzato")
+    await db.board.delete_one({"id": nid})
+    return {"deleted": 1}
+
+
+# ---------------------------------------------------------------------------
 # ADMIN LOG
 # ---------------------------------------------------------------------------
 async def _log_admin(user_id: str, action: str, meta: dict) -> None:

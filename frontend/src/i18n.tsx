@@ -50,6 +50,12 @@ const STRINGS = {
     myProfile: "Il mio profilo", classInfo: "Info classe",
     representative: "Rappresentante", searchPlaceholder: "Cerca...",
     all: "Tutti", read: "letto", readCount: "letture",
+    polls: "Sondaggi", board: "Bacheca",
+    newPoll: "Nuovo sondaggio", question: "Domanda", options: "Opzioni",
+    addOption: "+ Aggiungi opzione", vote: "Vota", close: "Chiudi", closed: "Chiuso",
+    votes: "voti", empty_polls: "Nessun sondaggio al momento",
+    empty_board: "La bacheca è vuota. Lascia un messaggio!",
+    postNote: "Pubblica nota", writeSomething: "Scrivi qualcosa...",
   },
   en: {
     welcome: "Welcome", login: "Login", register: "Register", logout: "Logout",
@@ -96,6 +102,12 @@ const STRINGS = {
     myProfile: "My profile", classInfo: "Class info",
     representative: "Representative", searchPlaceholder: "Search...",
     all: "All", read: "read", readCount: "reads",
+    polls: "Polls", board: "Board",
+    newPoll: "New poll", question: "Question", options: "Options",
+    addOption: "+ Add option", vote: "Vote", close: "Close", closed: "Closed",
+    votes: "votes", empty_polls: "No polls yet",
+    empty_board: "The board is empty. Leave a message!",
+    postNote: "Post note", writeSomething: "Write something...",
   },
 };
 

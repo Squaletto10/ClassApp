@@ -18,6 +18,8 @@ export default function More() {
     { key: "homework", emoji: "📝", label: t("homework"), route: "/more/homework" },
     { key: "announcements", emoji: "📢", label: t("announcements"), route: "/more/announcements" },
     { key: "members", emoji: "👥", label: t("classMembers"), route: "/more/members" },
+    { key: "polls", emoji: "📊", label: t("polls"), route: "/more/polls" },
+    { key: "board", emoji: "📌", label: t("board"), route: "/more/board" },
     { key: "profile", emoji: "👤", label: t("profile"), route: "/more/profile" },
     { key: "settings", emoji: "⚙️", label: t("settings"), route: "/more/settings" },
     { key: "duck", emoji: "🦆", label: t("duckJump"), route: "/more/duckjump" },
